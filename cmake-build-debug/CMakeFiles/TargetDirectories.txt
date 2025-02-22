@@ -1,3 +1,0 @@
-/Users/vincenzo/CLionProjects/progettoSupermercato/cmake-build-debug/CMakeFiles/progettoSupermercato.dir
-/Users/vincenzo/CLionProjects/progettoSupermercato/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/vincenzo/CLionProjects/progettoSupermercato/cmake-build-debug/CMakeFiles/rebuild_cache.dir

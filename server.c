@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include "queue.h"
+#include "colors.h"
 
 #define MAX_CUSTOMERS 10
 #define E 5
@@ -14,6 +15,7 @@
 #define PORT 50000
 
 typedef struct {
+    int id;
     char *name;
     int price;
 } Product;
@@ -44,7 +46,6 @@ void * cassiere(void * arg) {
     const int numCassa = *(int *) arg;
     // Ciclo infinito per servire i clienti
     printf("Cassa %d aperta.\n", numCassa);
-    cassa[numCassa].fixedTime = rand() % 5 + 1;
     while (1) {
         // Attende che ci siano clienti in coda
         pthread_mutex_lock(&cassa[numCassa].mutexCassa);
@@ -55,9 +56,9 @@ void * cassiere(void * arg) {
         pthread_mutex_unlock(&cassa[numCassa].mutexCassa);
         // Simula il pagamento
         if (client) {
-            printf("Il cliente %d è in fase di pagamento alla cassa %d\n", client->id, numCassa);
+            printf(COLOR_MAGENTA "Il cliente %d è in fase di pagamento alla cassa %d\n" COLOR_RESET, client->id, numCassa);
             sleep(cassa[numCassa].fixedTime + client->nProducts);
-            printf("Il cliente %d ha terminato il pagamento ed esce dal supermercato.\n", client->id);
+            printf(COLOR_GREEN "Il cliente %d ha terminato il pagamento ed esce dal supermercato.\n" COLOR_RESET, client->id);
             // Libera la memoria e aggiorna il numero di clienti presenti nel supermercato
             free(client->products);
             free(client);
@@ -71,7 +72,6 @@ void * cassiere(void * arg) {
 
 void * spesa(void * arg) {
     Customer *client = (Customer *) arg;
-    srand(time(NULL));
     client->time = rand() % 10 + 1;
     client->nProducts = rand() % 5 + 1;
     client->products = malloc(client->nProducts * sizeof(Product));
@@ -79,7 +79,7 @@ void * spesa(void * arg) {
         client->products[i].name = "Prodotto";
         client->products[i].price = rand() % 10 + 1;
     }
-    printf("Cliente %d fa acquisti per %d secondi.\n", client->id, client->time);
+    printf(COLOR_MAGENTA "Cliente %d fa acquisti per %d secondi.\n" COLOR_RESET, client->id, client->time);
     sleep(client->time);
     if (client->nProducts > 0) {
         const int chosenCassa = rand() % NUM_CASSE;
@@ -87,7 +87,7 @@ void * spesa(void * arg) {
         enqueue(&cassa[chosenCassa].customerInCassa, client);
         pthread_cond_signal(&cassa[chosenCassa].condCodaVuota);;
         pthread_mutex_unlock(&cassa[chosenCassa].mutexCassa);
-        printf("Cliente %d si mette in fila alla cassa %d.\n", client->id, chosenCassa);
+        printf(COLOR_CYAN "Cliente %d si mette in fila alla cassa %d.\n" COLOR_RESET, client->id, chosenCassa);
     } else {
         printf("Cliente %d non ha acquistato nulla ed esce dal supermercato.\n", client->id);
         free(client->products);
@@ -108,17 +108,18 @@ void * client(void * arg) {
     if (currentCustomers < MAX_CUSTOMERS) {
         enqueue(&customerInStore, customer);
         currentCustomers++;
-        printf("Il cliente %d è entrato nel supermercato.\n", customer->id);
+        printf(COLOR_BLUE "Il cliente %d è entrato nel supermercato.\n" COLOR_RESET, customer->id);
         pthread_t spesaThread;
         pthread_create(&spesaThread, NULL, spesa, (void *) customer);
         pthread_detach(spesaThread);
     } else {
         enqueue(&customerInQueue, customer);
-        printf("Il supermercato è pieno, il cliente %d è in attesa.\n", customer->id);
+        printf(COLOR_RED"Il supermercato è pieno, il cliente %d è in attesa.\n" COLOR_RESET, customer->id);
     }
     pthread_mutex_unlock(&mutexStore);
     pthread_exit(0);
 }
+
 void *direttore(void *arg) {
     while (1) {
         pthread_mutex_lock(&mutexStore);
@@ -133,7 +134,7 @@ void *direttore(void *arg) {
                 } else {
                     enqueue(&customerInStore, client);
                     currentCustomers++;
-                    printf("Il cliente %d è entrato nel supermercato.\n", client->id);
+                    printf(COLOR_BLUE"Il cliente %d è entrato nel supermercato.\n"COLOR_RESET, client->id);
                     pthread_t clientThread;
                     pthread_create(&clientThread, NULL, spesa, client);
                     pthread_detach(clientThread);
@@ -186,10 +187,12 @@ int main(int argc, char* argv[]) {
     pthread_t casse[NUM_CASSE];
     pthread_t connectionThread, direttoreThread;
     int i;
+    srand(time(NULL)); // Initialize random number generator once
     for (i = 0; i < NUM_CASSE; i++) {
         createQueue(&cassa[i].customerInCassa, sizeof(Customer)); // Inizializzazione delle code delle casse
         int *cassaIndex = malloc(sizeof(int));
         *cassaIndex = i;
+        cassa[i].fixedTime = rand() % 5 + 1;
         pthread_create(&casse[i], NULL, cassiere, (void *) cassaIndex); // Creazione dei thread delle casse
         pthread_mutex_init(&cassa[i].mutexCassa, NULL);
         pthread_cond_init(&cassa[i].condCodaVuota, NULL); // Inizializzazione dei mutex delle casse
@@ -197,9 +200,9 @@ int main(int argc, char* argv[]) {
     }
     pthread_create(&connectionThread, NULL, connection, NULL);// Creazione del thread di connessione
     pthread_create(&direttoreThread, NULL, direttore, NULL); // Creazione del thread del direttore
-    createQueue(&customerInStore, sizeof(Customer));
-    createQueue(&customerInQueue, sizeof(Customer));
-    pthread_join(connectionThread, NULL); // Join del thread di connessione
+    createQueue(&customerInStore, sizeof(Customer)); // Inizializzazione della coda del supermercato
+    createQueue(&customerInQueue, sizeof(Customer)); // Inizializzazione della coda dei clienti in attesa
+    pthread_join(connectionThread, NULL); // Attende la terminazione del thread di connessione
     // Distruzione dei mutex prima di terminare
     for (i = 0; i < NUM_CASSE; i++) {
         pthread_mutex_destroy(&cassa[i].mutexCassa);
