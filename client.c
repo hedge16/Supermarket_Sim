@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     struct sockaddr_in serverAddr;
     const int PORT = 50000;
 
-    for (i = 0; i < 12; i++) {
+    for (i = 0; i < 25; i++) {
         clientSocket = socket(AF_INET, SOCK_STREAM, 0);
         if (clientSocket < 0) {
             perror("Errore nella creazione del socket");

@@ -58,6 +58,7 @@ void * cassiere(void * arg) {
             printf("Il cliente %d è in fase di pagamento alla cassa %d\n", client->id, numCassa);
             sleep(cassa[numCassa].fixedTime + client->nProducts);
             printf("Il cliente %d ha terminato il pagamento ed esce dal supermercato.\n", client->id);
+            // Libera la memoria e aggiorna il numero di clienti presenti nel supermercato
             free(client->products);
             free(client);
             // Aggiorna il numero di clienti presenti nel supermercato
@@ -98,7 +99,6 @@ void * spesa(void * arg) {
     pthread_exit(0);
 }
 
-
 void * client(void * arg) {
     // Riceve il cliente e lo mette in coda nel supermercato
     const int clientSocket = *(int *) arg;
@@ -109,6 +109,9 @@ void * client(void * arg) {
         enqueue(&customerInStore, customer);
         currentCustomers++;
         printf("Il cliente %d è entrato nel supermercato.\n", customer->id);
+        pthread_t spesaThread;
+        pthread_create(&spesaThread, NULL, spesa, (void *) customer);
+        pthread_detach(spesaThread);
     } else {
         enqueue(&customerInQueue, customer);
         printf("Il supermercato è pieno, il cliente %d è in attesa.\n", customer->id);
@@ -116,30 +119,33 @@ void * client(void * arg) {
     pthread_mutex_unlock(&mutexStore);
     pthread_exit(0);
 }
-
 void *direttore(void *arg) {
-    // Controlla il numero di clienti presenti nel supermercato
     while (1) {
         pthread_mutex_lock(&mutexStore);
-        if (currentCustomers > 0) {
-            Customer *customer = dequeue(&customerInStore);
-            currentCustomers--;
-            pthread_mutex_unlock(&mutexStore);
-            pthread_t clientThread;
-            pthread_create(&clientThread, NULL, spesa, customer);
-        } else {
-            if (!isEmpty(&customerInQueue)) {
-                Customer *customer = dequeue(&customerInQueue);
-                enqueue(&customerInStore, customer);
-                currentCustomers++;
-                pthread_mutex_unlock(&mutexStore);
-                printf("Il cliente %d è entrato nel supermercato.\n", customer->id);
+        // Se il numero di clienti scende sotto la soglia, ne fa entrare altri E
+        if (currentCustomers <= MAX_CUSTOMERS - E && !isEmpty(&customerInQueue)) {
+            int clientiDaFarEntrare = E;
+            while (clientiDaFarEntrare > 0 && !isEmpty(&customerInQueue)) {
+                Customer *client = dequeue(&customerInQueue);
+                if (client->nProducts == 0) {
+                    printf("Il cliente %d non ha acquistato nulla ed esce immediatamente.\n", client->id);
+                    free(client);
+                } else {
+                    enqueue(&customerInStore, client);
+                    currentCustomers++;
+                    printf("Il cliente %d è entrato nel supermercato.\n", client->id);
+                    pthread_t clientThread;
+                    pthread_create(&clientThread, NULL, spesa, client);
+                    pthread_detach(clientThread);
+                }
+                clientiDaFarEntrare--;
             }
         }
         pthread_mutex_unlock(&mutexStore);
-        sleep(1);
+        sleep(1); // Controlla periodicamente
     }
 }
+
 void * connection(void * arg) {
     // Crea un socket , si mette in ascolto e crea un nuovo thread per ogni richiesta
     int clientSocket; // Descrittori dei socket

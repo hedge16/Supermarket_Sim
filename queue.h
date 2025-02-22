@@ -1,7 +1,7 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#define MAX 20
+#define MAX 100
 
 typedef struct {
     void *data[MAX]; // Array di puntatori generici
