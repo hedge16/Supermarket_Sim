@@ -1,0 +1,13 @@
+# ninja log v6
+6	239	1740229484010356082	CMakeFiles/progettoSupermercato.dir/server.c.o	bdfa9caab580854b
+7	220	1740159819779895911	CMakeFiles/progettoSupermercato.dir/client.c.o	d5477ae4a68dbfc5
+8	396	1740220376605239357	CMakeFiles/progettoSupermercato.dir/queue.c.o	3675ada88b51f1f5
+239	392	1740229484244201973	progettoSupermercato	7a42c837cb1e3cc9
+5	400	1740220376602401944	CMakeFiles/progettoSupermercato.dir/main.c.o	4960ac9dea883821
+2	88	1740232075986387107	build.ninja	4eec9728793a809e
+5	270	1740232294973381743	CMakeFiles/progettoSupermercato.dir/server.c.o	bdfa9caab580854b
+271	417	1740232295238629437	progettoSupermercato	7a42c837cb1e3cc9
+3	275	1740233251839874922	CMakeFiles/progettoSupermercato.dir/server.c.o	bdfa9caab580854b
+275	431	1740233252112227018	progettoSupermercato	7a42c837cb1e3cc9
+5	234	1740233528240478061	CMakeFiles/progettoSupermercato.dir/server.c.o	bdfa9caab580854b
+234	352	1740233528469668935	progettoSupermercato	7a42c837cb1e3cc9
