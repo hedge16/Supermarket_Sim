@@ -41,7 +41,6 @@ Cassa cassa[NUM_CASSE];
 pthread_mutex_t mutexStore = PTHREAD_MUTEX_INITIALIZER;
 int currentCustomers = 0;
 
-
 void * cassiere(void * arg) {
     const int numCassa = *(int *) arg;
     // Ciclo infinito per servire i clienti
@@ -72,6 +71,8 @@ void * cassiere(void * arg) {
 
 void * spesa(void * arg) {
     Customer *client = (Customer *) arg;
+    printf("DEBUG: Cliente %d entra in spesa con indirizzo memoria %p\n", client->id, client);
+
     client->time = rand() % 10 + 1;
     client->nProducts = rand() % 5 + 1;
     client->products = malloc(client->nProducts * sizeof(Product));
@@ -104,6 +105,9 @@ void * client(void * arg) {
     const int clientSocket = *(int *) arg;
     Customer *customer = malloc(sizeof(Customer));
     recv(clientSocket, customer, sizeof(Customer), 0);
+    printf("DEBUG: Cliente ricevuto ID=%d\n", customer->id);
+
+
     pthread_mutex_lock(&mutexStore);
     if (currentCustomers < MAX_CUSTOMERS) {
         enqueue(&customerInStore, customer);
@@ -149,6 +153,7 @@ void *direttore(void *arg) {
 
 void * connection(void * arg) {
     // Crea un socket , si mette in ascolto e crea un nuovo thread per ogni richiesta
+    const char *ip = (char *) arg;
     int clientSocket; // Descrittori dei socket
     struct sockaddr_in serverAddr, clientAddr; // Indirizzi del server e del client
     socklen_t addrSize = sizeof(struct sockaddr_in); // Dimensione dell'indirizzo
@@ -159,7 +164,7 @@ void * connection(void * arg) {
     }
     serverAddr.sin_family = AF_INET; // Dominio del socket
     serverAddr.sin_port = htons(PORT); // Porta del socket
-    serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Indirizzo del server
+    serverAddr.sin_addr.s_addr = inet_addr(ip); // Indirizzo del server
     if (bind(serverSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
         perror("Errore nel binding del socket");
         exit(1);
@@ -184,6 +189,12 @@ void * connection(void * arg) {
 
 
 int main(int argc, char* argv[]) {
+
+    if (argc < 2) {
+        printf("Usage : ./server <ip>\n");
+        exit(1);
+    }
+    const char *ip = argv[1];
     pthread_t casse[NUM_CASSE];
     pthread_t connectionThread, direttoreThread;
     int i;
@@ -193,12 +204,12 @@ int main(int argc, char* argv[]) {
         int *cassaIndex = malloc(sizeof(int));
         *cassaIndex = i;
         cassa[i].fixedTime = rand() % 5 + 1;
-        pthread_create(&casse[i], NULL, cassiere, (void *) cassaIndex); // Creazione dei thread delle casse
-        pthread_mutex_init(&cassa[i].mutexCassa, NULL);
-        pthread_cond_init(&cassa[i].condCodaVuota, NULL); // Inizializzazione dei mutex delle casse
+        pthread_create(&casse[i], NULL, cassiere, (void *) cassaIndex);// Creazione dei thread delle casse
+        pthread_mutex_init(&cassa[i].mutexCassa, NULL); // Inizializzazione dei mutex delle casse
+        pthread_cond_init(&cassa[i].condCodaVuota, NULL); // Inizializzazione delle variabile condizione delle casse
         pthread_detach(casse[i]); // Detach dei thread delle casse
     }
-    pthread_create(&connectionThread, NULL, connection, NULL);// Creazione del thread di connessione
+    pthread_create(&connectionThread, NULL, connection, (void *) ip);// Creazione del thread di connessione
     pthread_create(&direttoreThread, NULL, direttore, NULL); // Creazione del thread del direttore
     createQueue(&customerInStore, sizeof(Customer)); // Inizializzazione della coda del supermercato
     createQueue(&customerInQueue, sizeof(Customer)); // Inizializzazione della coda dei clienti in attesa
