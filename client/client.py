@@ -1,16 +1,19 @@
 import sys
 import struct
 import socket
-from PyQt5.QtWidgets import QApplication, QDialog
+import threading
+import time
+from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QVBoxLayout
+
 from client_ui import Ui_Dialog  # UI principale
 from cart import Ui_Dialog as Ui_CartDialog  # UI del carrello (rinominata)
 
-class CartWindow(QDialog, Ui_CartDialog):  # Ora usa la UI corretta
+class CartWindow(QDialog, Ui_CartDialog):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
         self.buttonBox.accepted.connect(self.accept_cart)
-        self.buttonBox.rejected.connect(self.close)  # Usa close() invece di reject()
+        self.buttonBox.rejected.connect(self.close)
 
         # Lista dei prodotti con prezzi fissi
         self.products_list = [
@@ -25,13 +28,26 @@ class CartWindow(QDialog, Ui_CartDialog):  # Ora usa la UI corretta
             ("Pasta", 5)
         ]
 
+        # Inizializza il cronometro
+        self.start_time = time.time()
+        self.running = True
+        self.timer_thread = threading.Thread(target=self.update_timer)
+        self.timer_thread.start()
+
+    def update_timer(self):
+        while self.running:
+            time.sleep(1)
+            self.time_spent = int(time.time() - self.start_time)
+            self.label_9.setText(f"{self.time_spent} secondi")
+
     def accept_cart(self):
         """Recupera i prodotti selezionati e chiude la finestra."""
+        self.running = False
         self.selected_products = []
 
         spin_boxes = [
             self.spinBox, self.spinBox_2, self.spinBox_3, self.spinBox_4,
-            self.spinBox_5, self.spinBox_6, self.spinBox_7, self.spinBox_8, self.spinBox_9
+            self.spinBox_5, self.spinBox_6, self.spinBox_7, self.spinBox_8
         ]
 
         for i, spin_box in enumerate(spin_boxes):
@@ -49,6 +65,7 @@ class MyClientDialog(QDialog, Ui_Dialog):
         self.setupUi(self)
         self.buttonBox.accepted.connect(self.on_accept)
         self.buttonBox.rejected.connect(self.reject)
+        self.time_spent = 0
 
     def on_accept(self):
         num_clienti = self.spinBox.value()  # Numero di clienti scelti
@@ -58,25 +75,21 @@ class MyClientDialog(QDialog, Ui_Dialog):
             cart_window = CartWindow()
             if cart_window.exec_():
                 products = cart_window.selected_products
+                self.time_spent = cart_window.time_spent  # Update with actual time spent
                 nProducts = len(products)
-
-                if nProducts == 0:
-                    print(f"Cliente {cliente_id} ha un carrello vuoto, non verrà inviato.")
-                    continue  # Salta il cliente se non ha prodotti
 
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.connect(("127.0.0.1", 50000))
 
-                    time = 10  # Simuliamo un tempo di permanenza fisso
-                    customer_data = struct.pack("iii", cliente_id, time, nProducts)
+                    customer_data = struct.pack("iii", cliente_id, self.time_spent, nProducts)
 
                     for product_id, name, price in products:
                         name_bytes = name.encode('utf-8').ljust(50, b'\0')
                         customer_data += struct.pack("i50si", product_id, name_bytes, price)
 
                     sock.sendall(customer_data)
-                    print(f"Cliente {cliente_id} inviato con {nProducts} prodotti.")
+                    print(f"Cliente {cliente_id} inviato con {nProducts} prodotti e tempo di permanenza {self.time_spent} secondi.")
 
                     sock.close()
                 except Exception as e:

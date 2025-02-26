@@ -33,26 +33,26 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>0</y>
+     <y>30</y>
      <width>681</width>
-     <height>361</height>
+     <height>334</height>
     </rect>
    </property>
    <layout class="QFormLayout" name="formLayout">
-    <item row="1" column="1">
-     <widget class="QSpinBox" name="spinBox"/>
-    </item>
     <item row="1" column="0">
      <widget class="QLabel" name="label">
       <property name="text">
-       <string>Latte</string>
+       <string>Latte 🍼</string>
       </property>
      </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QSpinBox" name="spinBox"/>
     </item>
     <item row="2" column="0">
      <widget class="QLabel" name="label_2">
       <property name="text">
-       <string>Mela</string>
+       <string>Mela 🍎 </string>
       </property>
      </widget>
     </item>
@@ -62,7 +62,7 @@
     <item row="3" column="0">
      <widget class="QLabel" name="label_3">
       <property name="text">
-       <string>Carne</string>
+       <string>Carne 🍖</string>
       </property>
      </widget>
     </item>
@@ -72,7 +72,7 @@
     <item row="4" column="0">
      <widget class="QLabel" name="label_4">
       <property name="text">
-       <string>Pasta</string>
+       <string>Pasta 🍝 </string>
       </property>
      </widget>
     </item>
@@ -82,7 +82,7 @@
     <item row="5" column="0">
      <widget class="QLabel" name="label_5">
       <property name="text">
-       <string>Cereali</string>
+       <string>Cereali 🥣</string>
       </property>
      </widget>
     </item>
@@ -92,7 +92,7 @@
     <item row="6" column="0">
      <widget class="QLabel" name="label_6">
       <property name="text">
-       <string>Uova</string>
+       <string>Uova 🥚</string>
       </property>
      </widget>
     </item>
@@ -102,7 +102,7 @@
     <item row="7" column="0">
      <widget class="QLabel" name="label_7">
       <property name="text">
-       <string>Formaggio</string>
+       <string>Formaggio 🧀</string>
       </property>
      </widget>
     </item>
@@ -112,7 +112,7 @@
     <item row="8" column="0">
      <widget class="QLabel" name="label_8">
       <property name="text">
-       <string>Pane</string>
+       <string>Pane  🥖</string>
       </property>
      </widget>
     </item>
@@ -120,14 +120,18 @@
      <widget class="QSpinBox" name="spinBox_8"/>
     </item>
     <item row="9" column="0">
-     <widget class="QLabel" name="label_9">
+     <widget class="QLabel" name="label_10">
       <property name="text">
-       <string>Pasta</string>
+       <string>Tempo trascorso: </string>
       </property>
      </widget>
     </item>
     <item row="9" column="1">
-     <widget class="QSpinBox" name="spinBox_9"/>
+     <widget class="QLabel" name="label_9">
+      <property name="text">
+       <string>0 secondi</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
