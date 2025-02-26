@@ -23,8 +23,8 @@ typedef struct {
 typedef struct {
     int id;
     int time;
-    Product *products;
     int nProducts;
+    Product *products;
 } Customer;
 
 typedef struct {
@@ -59,7 +59,6 @@ void * cassiere(void * arg) {
             sleep(cassa[numCassa].fixedTime + client->nProducts);
             printf(COLOR_GREEN "Il cliente %d ha terminato il pagamento ed esce dal supermercato.\n" COLOR_RESET, client->id);
             // Libera la memoria e aggiorna il numero di clienti presenti nel supermercato
-            free(client->products);
             free(client);
             // Aggiorna il numero di clienti presenti nel supermercato
             pthread_mutex_lock(&mutexStore);
@@ -71,15 +70,6 @@ void * cassiere(void * arg) {
 
 void * spesa(void * arg) {
     Customer *client = (Customer *) arg;
-    printf("DEBUG: Cliente %d entra in spesa con indirizzo memoria %p\n", client->id, client);
-
-    client->time = rand() % 10 + 1;
-    client->nProducts = rand() % 5 + 1;
-    client->products = malloc(client->nProducts * sizeof(Product));
-    for (int i = 0; i < client->nProducts; i++) {
-        client->products[i].name = "Prodotto";
-        client->products[i].price = rand() % 10 + 1;
-    }
     printf(COLOR_MAGENTA "Cliente %d fa acquisti per %d secondi.\n" COLOR_RESET, client->id, client->time);
     sleep(client->time);
     if (client->nProducts > 0) {
@@ -103,10 +93,10 @@ void * spesa(void * arg) {
 void * client(void * arg) {
     // Riceve il cliente e lo mette in coda nel supermercato
     const int clientSocket = *(int *) arg;
+    printf("Client socket: %d\n", clientSocket);
     Customer *customer = malloc(sizeof(Customer));
     recv(clientSocket, customer, sizeof(Customer), 0);
     printf("DEBUG: Cliente ricevuto ID=%d\n", customer->id);
-
 
     pthread_mutex_lock(&mutexStore);
     if (currentCustomers < MAX_CUSTOMERS) {
@@ -154,7 +144,7 @@ void *direttore(void *arg) {
 void * connection(void * arg) {
     // Crea un socket , si mette in ascolto e crea un nuovo thread per ogni richiesta
     const char *ip = (char *) arg;
-    int clientSocket; // Descrittori dei socket
+    //int clientSocket; // Descrittori dei socket
     struct sockaddr_in serverAddr, clientAddr; // Indirizzi del server e del client
     socklen_t addrSize = sizeof(struct sockaddr_in); // Dimensione dell'indirizzo
     const int serverSocket = socket(AF_INET, SOCK_STREAM, 0); // Creazione del socket
@@ -175,7 +165,7 @@ void * connection(void * arg) {
     }
     printf("Server in ascolto sulla porta %d...\n", PORT);
     while (1) {
-        clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &addrSize);
+        int clientSocket = accept(serverSocket, (struct sockaddr *) &clientAddr, &addrSize);
         printf("Nuova connessione accettata\n");
         if (clientSocket < 0) {
             perror("Errore nell'accettazione del client");
@@ -184,6 +174,7 @@ void * connection(void * arg) {
         pthread_t clientThread;
         pthread_create(&clientThread, NULL, client, (void *) &clientSocket);
         pthread_detach(clientThread);
+        usleep(500);
     }
 }
 

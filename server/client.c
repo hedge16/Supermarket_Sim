@@ -5,7 +5,6 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-
 typedef struct {
     char *name;
     int price;
@@ -14,8 +13,8 @@ typedef struct {
 typedef struct {
     int id;
     int time;
-    Product *products;
     int nProducts;
+    Product *products;
 } Customer;
 
 int main(int argc, char* argv[]) {
@@ -38,9 +37,8 @@ int main(int argc, char* argv[]) {
             perror("Errore nella connessione al server");
             exit(1);
         }
-        printf("Connessione al server riuscita\n");
-        Product products[] = {"Prodotto", i+10};
-        Customer client = {i, i+3, products, 1};
+        Product products[] = {{"Prodotto", i+10}};
+        Customer client = {i, i+3, products, 1};// Assegna un ID univoco al cliente
         send(clientSocket, &client, sizeof(Customer), 0);
         close(clientSocket);
     }
