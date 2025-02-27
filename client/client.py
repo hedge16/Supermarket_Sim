@@ -102,6 +102,7 @@ if __name__ == "__main__":
     dialog = MyClientDialog()
     if dialog.exec_():
         print("Dialogo chiuso con OK")
+        exit(0)
     else:
         print("Dialogo chiuso con Cancel")
-    sys.exit(app.exec_())
+        exit(1)

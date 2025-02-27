@@ -93,10 +93,8 @@ void * spesa(void * arg) {
 void * client(void * arg) {
     // Riceve il cliente e lo mette in coda nel supermercato
     const int clientSocket = *(int *) arg;
-    printf("Client socket: %d\n", clientSocket);
     Customer *customer = malloc(sizeof(Customer));
     recv(clientSocket, customer, sizeof(Customer), 0);
-    printf("DEBUG: Cliente ricevuto ID=%d\n", customer->id);
 
     pthread_mutex_lock(&mutexStore);
     if (currentCustomers < MAX_CUSTOMERS) {
