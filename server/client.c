@@ -38,8 +38,9 @@ int main(int argc, char* argv[]) {
             exit(1);
         }
         Product products[] = {{"Prodotto", i+10}};
-        Customer client = {i, i+3, products, 1};// Assegna un ID univoco al cliente
+        Customer client = {i, i+3, 1, products};// Assegna un ID univoco al cliente
         send(clientSocket, &client, sizeof(Customer), 0);
+        printf("Cliente %d inviato\n", i);
         close(clientSocket);
     }
     return 0;

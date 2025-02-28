@@ -47,7 +47,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Supermercato"))
         self.label.setText(_translate("Dialog", "Quanti clienti vuoi far entrare nel supermercato?"))
 
 
