@@ -28,7 +28,7 @@ To run the server, navigate to the server directory and run the following comman
 ``` docker-compose up --build ``` <br>
 To run the client, navigate to the client directory and run the following commands:
 ``` python3 client.py ``` <br>
-In the server directory there is also a C program to test the connection of multiple clients at once (configured to 25). Touse it run:
+In the server directory there is also a C program to test the connection of multiple clients at once (configured to 25). To use it run:
 ```
 gcc client.c -o client
 ./client
