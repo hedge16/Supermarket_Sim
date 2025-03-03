@@ -59,7 +59,7 @@ class CartWindow(QDialog, Ui_CartDialog):
 
         self.accept()  # Chiude il dialogo con successo
 
-class MyClientDialog(QDialog, Ui_Dialog):
+class ClientDialog(QDialog, Ui_Dialog):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
@@ -99,7 +99,7 @@ class MyClientDialog(QDialog, Ui_Dialog):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = MyClientDialog()
+    dialog = ClientDialog()
     if dialog.exec_():
         print("Dialogo chiuso con OK")
         exit(0)
