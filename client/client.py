@@ -65,36 +65,38 @@ class ClientDialog(QDialog, Ui_Dialog):
         self.setupUi(self)
         self.buttonBox.accepted.connect(self.on_accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.time_spent = 0
+        self.time_spent =  []
+        self.listaSpesaClienti = []
 
     def on_accept(self):
         num_clienti = self.spinBox.value()  # Numero di clienti scelti
         print(f"Invio {num_clienti} clienti al server...")
 
-        for cliente_id in range(1, num_clienti + 1):
+        for cliente_id in range(0, num_clienti):
             cart_window = CartWindow()
             if cart_window.exec_():
-                products = cart_window.selected_products
-                self.time_spent = cart_window.time_spent  # Update with actual time spent
-                nProducts = len(products)
+                self.listaSpesaClienti.append(cart_window.selected_products)
+                self.time_spent.append(cart_window.time_spent)   # Update with actual time spent
+                print(f"Cliente {cliente_id} ha speso {cart_window.time_spent} secondi.")
+        # Invia il carrello al server
+        for cliente_id in range(0, num_clienti ):
+            try:
+                nProducts = len(self.listaSpesaClienti[cliente_id])
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect(("127.0.0.1", 50000))
 
-                try:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    sock.connect(("127.0.0.1", 50000))
+                customer_data = struct.pack("iii", cliente_id, self.time_spent[cliente_id], nProducts)
 
-                    customer_data = struct.pack("iii", cliente_id, self.time_spent, nProducts)
+                for product_id, name, price in self.listaSpesaClienti[cliente_id]:
+                    name_bytes = name.encode('utf-8').ljust(50, b'\0')
+                    customer_data += struct.pack("i50si", product_id, name_bytes, price)
 
-                    for product_id, name, price in products:
-                        name_bytes = name.encode('utf-8').ljust(50, b'\0')
-                        customer_data += struct.pack("i50si", product_id, name_bytes, price)
+                sock.sendall(customer_data)
+                print(f"Cliente {cliente_id} inviato con {nProducts} prodotti e tempo di permanenza {self.time_spent[cliente_id]} secondi.")
 
-                    sock.sendall(customer_data)
-                    print(f"Cliente {cliente_id} inviato con {nProducts} prodotti e tempo di permanenza {self.time_spent} secondi.")
-
-                    sock.close()
-                except Exception as e:
-                    print(f"Errore con il client {cliente_id}: {e}")
-
+                sock.close()
+            except Exception as e:
+                print(f"Errore con il client {cliente_id}: {e}")
         self.accept()
 
 if __name__ == "__main__":
