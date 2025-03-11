@@ -29,6 +29,7 @@ docker-compose up --build
 ``` 
 To run the client, navigate to the client directory and run the following commands:
 ``` 
+pip install PyQt5
 python3 client.py 
 ``` 
 In the server directory there is also a C program to test the connection of multiple clients at once (configured to 25). To use it run:
