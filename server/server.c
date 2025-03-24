@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include "queue.h"
 #include "colors.h"
+#include <string.h>
 
 #define MAX_CUSTOMERS 10
 #define E 5
@@ -25,6 +26,7 @@ typedef struct {
     int time;
     int nProducts;
     Product *products;
+    int clientSocket;
 } Customer;
 
 typedef struct {
@@ -70,13 +72,14 @@ void * cassiere(void * arg) {
 
 void * spesa(void * arg) {
     Customer *client = (Customer *) arg;
-    printf(COLOR_MAGENTA "Cliente %d fa acquisti per %d secondi.\n" COLOR_RESET, client->id, client->time);
-    sleep(client->time);
+    recv(client->clientSocket, client, sizeof(Customer), 0);
+
+    printf(COLOR_MAGENTA "Cliente %d ha acquistato %d prodotti per %d secondi.\n" COLOR_RESET, client->id, client->nProducts, client->time);
     if (client->nProducts > 0) {
         const int chosenCassa = rand() % NUM_CASSE;
         pthread_mutex_lock(&cassa[chosenCassa].mutexCassa);
         enqueue(&cassa[chosenCassa].customerInCassa, client);
-        pthread_cond_signal(&cassa[chosenCassa].condCodaVuota);;
+        pthread_cond_signal(&cassa[chosenCassa].condCodaVuota);
         pthread_mutex_unlock(&cassa[chosenCassa].mutexCassa);
         printf(COLOR_CYAN "Cliente %d si mette in fila alla cassa %d.\n" COLOR_RESET, client->id, chosenCassa);
     } else {
@@ -96,15 +99,20 @@ void * client(void * arg) {
     Customer *customer = malloc(sizeof(Customer));
     recv(clientSocket, customer, sizeof(Customer), 0);
 
+    customer->clientSocket = clientSocket;
+
     pthread_mutex_lock(&mutexStore);
     if (currentCustomers < MAX_CUSTOMERS) {
         enqueue(&customerInStore, customer);
         currentCustomers++;
         printf(COLOR_BLUE "Il cliente %d è entrato nel supermercato.\n" COLOR_RESET, customer->id);
+        // segnala al client che può fare la spesa
+        send(clientSocket, "OK", strlen("OK"), 0);
         pthread_t spesaThread;
         pthread_create(&spesaThread, NULL, spesa, (void *) customer);
         pthread_detach(spesaThread);
     } else {
+        send(clientSocket, "WAIT", strlen("WAIT"), 0);
         enqueue(&customerInQueue, customer);
         printf(COLOR_RED"Il supermercato è pieno, il cliente %d è in attesa.\n" COLOR_RESET, customer->id);
     }
@@ -120,17 +128,14 @@ void *direttore(void *arg) {
             int clientiDaFarEntrare = E;
             while (clientiDaFarEntrare > 0 && !isEmpty(&customerInQueue)) {
                 Customer *client = dequeue(&customerInQueue);
-                if (client->nProducts == 0) {
-                    printf("Il cliente %d non ha acquistato nulla ed esce immediatamente.\n", client->id);
-                    free(client);
-                } else {
-                    enqueue(&customerInStore, client);
-                    currentCustomers++;
-                    printf(COLOR_BLUE"Il cliente %d è entrato nel supermercato.\n"COLOR_RESET, client->id);
-                    pthread_t clientThread;
-                    pthread_create(&clientThread, NULL, spesa, client);
-                    pthread_detach(clientThread);
-                }
+                int clientSocket = client->clientSocket;
+                send(clientSocket, "OK", strlen("OK"), 0);
+                enqueue(&customerInStore, client);
+                currentCustomers++;
+                printf(COLOR_BLUE"Il cliente %d è entrato nel supermercato.\n"COLOR_RESET, client->id);
+                pthread_t clientThread;
+                pthread_create(&clientThread, NULL, spesa, client);
+                pthread_detach(clientThread);
                 clientiDaFarEntrare--;
             }
         }
