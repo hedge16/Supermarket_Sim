@@ -49,6 +49,7 @@ class CartWindow(QDialog, Ui_CartDialog):
     def __init__(self, cliente_id, sock, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.setWindowTitle(f"Cliente {cliente_id} : Carrello")  # Imposta il titolo corretto
         self.buttonBox.accepted.connect(self.accept_cart)
         self.buttonBox.rejected.connect(self.reject_cart)
 
@@ -70,6 +71,7 @@ class CartWindow(QDialog, Ui_CartDialog):
         self.timer_worker.time_updated.connect(self.update_timer)
         self.timer_thread.started.connect(self.timer_worker.run)
         self.timer_thread.start()
+
 
     def accept_cart(self):
         self.time_spent = int(time.time() - self.start_time)
